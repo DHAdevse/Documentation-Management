@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/document")
 public class FileDocumentController {
@@ -47,6 +48,7 @@ public class FileDocumentController {
         return ResponseEntity.ok().body(fileDocument);
     }
 
+    @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/view-all")
     public ResponseEntity<List<FileDocument>> getAlL()
     {
