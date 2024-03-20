@@ -16,7 +16,6 @@ public class DocumentServiceImpl implements DocumentService{
     public DocumentServiceImpl(DocumentRepository documentRepository) {
         this.documentRepository = documentRepository;
     }
-
     @Override
     public Optional<FileDocument> findDocument(String id) {
         return documentRepository.findById(id);
