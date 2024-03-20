@@ -15,10 +15,8 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 public class Versions {
 
     @Id
-    private String id;
+    private int id;
     private String nameVer;
-    @DBRef
-    private FileDocument fileDocument;
     private String link;
     private String date;
     private  String message;

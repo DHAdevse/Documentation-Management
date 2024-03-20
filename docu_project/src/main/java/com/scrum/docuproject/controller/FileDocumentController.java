@@ -4,6 +4,7 @@ import com.scrum.docuproject.models.FileDocument;
 import com.scrum.docuproject.models.Versions;
 import com.scrum.docuproject.repository.DocumentRepository;
 import com.scrum.docuproject.repository.UserRepository;
+import com.scrum.docuproject.repository.VersionRepository;
 import com.scrum.docuproject.service.DocumentService;
 import com.scrum.docuproject.service.FirebaseService;
 import com.scrum.docuproject.service.UserDetailsImpl;
@@ -18,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -32,6 +34,8 @@ public class FileDocumentController {
     private DocumentRepository documentRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    VersionRepository versionRepository;
 
     @Autowired
     public FileDocumentController(DocumentService documentService) {
@@ -78,27 +82,40 @@ public class FileDocumentController {
         return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/{id}/version/add-file")
-    public ResponseEntity<Versions> addFile(@PathVariable String id, @RequestParam("file") MultipartFile file) throws Exception{
+    @PostMapping("/{id}/version/add-file/{message}")
+    public ResponseEntity<Versions> addFile(@PathVariable String id, @PathVariable String message, @RequestParam("file") MultipartFile file) throws Exception{
         Optional<FileDocument> fileDocument = documentRepository.findById(id);
+
         Versions versions = new Versions();
         List<Versions> versionsList = fileDocument.get().getVersions();
-
-//        String extension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.'));
         String extension = file.getOriginalFilename();
-        versions.setNameVer(extension);
-        versions.setId(String.valueOf(versionsList.size() + 1));
+        String fileName = extension;
+
+        for (Versions ver : versionsList){
+            if (ver.getNameVer().equals(extension)){
+                fileName = extension + "_" + UUID.randomUUID().toString();
+                break;
+
+            }
+        }
+        versions.setId(versionsList.size() + 1);
+        versions.setNameVer(fileName);
         versions.setLink(uploadService.uploadFile(file));
         LocalDateTime time = LocalDateTime.now();
         String formatTime = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         versions.setDate(formatTime);
-        versions.setMessage("");
+        versions.setMessage(message);
+//        versions.setFileDocument(fileDocument);
+
         if(versionsList.isEmpty()){
             versionsList = new ArrayList<>();
         }
+
         versionsList.add(versions);
+        versionRepository.save(versions);
         fileDocument.get().setVersions(versionsList);
         documentRepository.save(fileDocument.get());
+
         return ResponseEntity.ok(versions);
 
     }
