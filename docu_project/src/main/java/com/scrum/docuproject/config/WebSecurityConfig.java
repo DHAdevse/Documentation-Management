@@ -80,7 +80,7 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**").permitAll().
 //                    .requestMatchers("/document/**").permitAll().
-        anyRequest().authenticated());
+                    anyRequest().authenticated());
 
     http.authenticationProvider(authenticationProvider());
 

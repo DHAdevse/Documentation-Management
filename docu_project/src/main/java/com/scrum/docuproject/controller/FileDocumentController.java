@@ -83,6 +83,7 @@ public class FileDocumentController {
         Optional<FileDocument> fileDocument = documentRepository.findById(id);
         Versions versions = new Versions();
         List<Versions> versionsList = fileDocument.get().getVersions();
+
 //        String extension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf('.'));
         String extension = file.getOriginalFilename();
         versions.setNameVer(extension);
