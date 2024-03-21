@@ -20,4 +20,5 @@ public class Versions {
     private String link;
     private String date;
     private  String message;
+    private double size;
 }

@@ -90,7 +90,7 @@ public class FileDocumentController {
         List<Versions> versionsList = fileDocument.get().getVersions();
         String extension = file.getOriginalFilename();
         String fileName = extension;
-
+        double size = file.getSize();
         for (Versions ver : versionsList){
             if (ver.getNameVer().equals(extension)){
                 fileName = extension + "_" + UUID.randomUUID().toString();
@@ -105,7 +105,7 @@ public class FileDocumentController {
         String formatTime = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         versions.setDate(formatTime);
         versions.setMessage(message);
-//        versions.setFileDocument(fileDocument);
+        versions.setSize(size);
 
         if(versionsList.isEmpty()){
             versionsList = new ArrayList<>();
