@@ -26,13 +26,13 @@ public class FirebaseService {
         FileInputStream serviceAccountStream = new FileInputStream(serviceAccount);
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccountStream))
-                .setStorageBucket("my-project-scrum-17425.appspot.com")
+                .setStorageBucket("final-scrum-project.appspot.com")
                 .build();
-
         if (FirebaseApp.getApps().isEmpty()) {
             FirebaseApp.initializeApp(options);
         }
     }
+
 
     public String uploadFile(MultipartFile multipartFile) throws Exception {
         String fileName = multipartFile.getOriginalFilename();
