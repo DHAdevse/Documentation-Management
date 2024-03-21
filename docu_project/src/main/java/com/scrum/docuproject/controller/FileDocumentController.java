@@ -1,19 +1,31 @@
 package com.scrum.docuproject.controller;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.scrum.docuproject.models.FileDocument;
+import com.scrum.docuproject.models.User;
 import com.scrum.docuproject.models.Versions;
 import com.scrum.docuproject.repository.DocumentRepository;
 import com.scrum.docuproject.repository.UserRepository;
 import com.scrum.docuproject.repository.VersionRepository;
 import com.scrum.docuproject.service.DocumentService;
+import com.scrum.docuproject.service.DocumentServiceImpl;
 import com.scrum.docuproject.service.FirebaseService;
+//import com.scrum.docuproject.service.VersionService;
 import com.scrum.docuproject.service.UserDetailsImpl;
+import io.jsonwebtoken.Jwt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -21,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/document")
 public class FileDocumentController {
@@ -36,7 +47,6 @@ public class FileDocumentController {
     UserRepository userRepository;
     @Autowired
     VersionRepository versionRepository;
-
     @Autowired
     public FileDocumentController(DocumentService documentService) {
         this.documentService = documentService;
@@ -52,24 +62,26 @@ public class FileDocumentController {
         String originalFileName = file.getOriginalFilename();
         String modifiedFileName = originalFileName;
         Versions versions = new Versions();
+
         versions.setNameVer(modifiedFileName);
         uploadService.urlFirebase(file);
         versions.setLink(uploadService.uploadFile(file));
         LocalDateTime time = LocalDateTime.now();
         String formatTime = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         versions.setDate(formatTime);
-//        versions.setMessage(message);
+        versions.setMessage("Initial");
         List<Versions> versionsList = new ArrayList<>();
         versionsList.add(versions);
-        fileDocument.setVersions( versionsList);
+        fileDocument.setVersions(versionsList);
+        versionRepository.save(versions);
         documentRepository.save(fileDocument);
         return ResponseEntity.ok().body(fileDocument);
     }
 
-    @CrossOrigin(origins = "http://localhost:3000")
     @GetMapping("/view-all")
     public ResponseEntity<List<FileDocument>> getAlL()
     {
+
         return ResponseEntity.ok().body(documentService.getAll());
     }
 
@@ -98,28 +110,35 @@ public class FileDocumentController {
 
     @PostMapping("/{id}/version/add-file/{message}")
     public ResponseEntity<Versions> addFile(@PathVariable String id, @PathVariable String message, @RequestParam("file") MultipartFile file) throws Exception{
-        Optional<FileDocument> fileDocument = documentRepository.findById(id);
-
+        Optional<FileDocument> findFileDocument = documentRepository.findById(id);
+        FileDocument fileDocument = findFileDocument.orElse(null);
         Versions versions = new Versions();
-        List<Versions> versionsList = fileDocument.get().getVersions();
-        String extension = file.getOriginalFilename();
-        String fileName = extension;
-        double size = file.getSize();
+        List<Versions> versionsList = fileDocument.getVersions();
+        String originalFileName = file.getOriginalFilename();
+        String modifiedFileName = originalFileName;
+
         for (Versions ver : versionsList){
-            if (ver.getNameVer().equals(extension)){
-                fileName = extension + "_" + UUID.randomUUID().toString();
+            String temp = ver.getNameVer();
+            if (temp.equals(originalFileName)){
+
+                String extension = originalFileName.substring(originalFileName.lastIndexOf('.'));
+                String baseName = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
+                modifiedFileName = baseName + "_" + UUID.randomUUID().toString() + extension;
                 break;
 
             }
+            else{
+//                versions.setId(versionsList);
+                versions.setNameVer(modifiedFileName);
+                uploadService.urlFirebase(file);
+                versions.setLink(uploadService.uploadFile(file));
+                LocalDateTime time = LocalDateTime.now();
+                String formatTime = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                versions.setDate(formatTime);
+                versions.setMessage(message);
+            }
         }
-        versions.setId(versionsList.size() + 1);
-        versions.setNameVer(fileName);
-        versions.setLink(uploadService.uploadFile(file));
-        LocalDateTime time = LocalDateTime.now();
-        String formatTime = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        versions.setDate(formatTime);
-        versions.setMessage(message);
-        versions.setSize(size);
+
 
         if(versionsList.isEmpty()){
             versionsList = new ArrayList<>();
@@ -127,8 +146,8 @@ public class FileDocumentController {
 
         versionsList.add(versions);
         versionRepository.save(versions);
-        fileDocument.get().setVersions(versionsList);
-        documentRepository.save(fileDocument.get());
+        fileDocument.setVersions(versionsList);
+        documentRepository.save(fileDocument);
 
         return ResponseEntity.ok(versions);
 
