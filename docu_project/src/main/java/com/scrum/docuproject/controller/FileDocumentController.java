@@ -42,12 +42,26 @@ public class FileDocumentController {
         this.documentService = documentService;
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<FileDocument> createDocument(@RequestBody FileDocument fileDocument)
-    {
+    @PostMapping("/create/{title}")
+    public ResponseEntity<FileDocument> createDocument(@PathVariable String title, @RequestParam("file") MultipartFile file) throws Exception {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        FileDocument fileDocument = new FileDocument();
         fileDocument.setUser(userRepository.findUserById(userDetails.getId()));
-        fileDocument.setVersions(new ArrayList<>());
+        fileDocument.setTitle(title);
+
+        String originalFileName = file.getOriginalFilename();
+        String modifiedFileName = originalFileName;
+        Versions versions = new Versions();
+        versions.setNameVer(modifiedFileName);
+        uploadService.urlFirebase(file);
+        versions.setLink(uploadService.uploadFile(file));
+        LocalDateTime time = LocalDateTime.now();
+        String formatTime = time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        versions.setDate(formatTime);
+//        versions.setMessage(message);
+        List<Versions> versionsList = new ArrayList<>();
+        versionsList.add(versions);
+        fileDocument.setVersions( versionsList);
         documentRepository.save(fileDocument);
         return ResponseEntity.ok().body(fileDocument);
     }

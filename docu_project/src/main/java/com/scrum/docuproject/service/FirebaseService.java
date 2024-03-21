@@ -36,14 +36,19 @@ public class FirebaseService {
 
     public String uploadFile(MultipartFile multipartFile) throws Exception {
         String fileName = multipartFile.getOriginalFilename();
-//        StorageClient storageClient = StorageClient.getInstance();
-//        String fileUrl = storageClient.bucket().create(fileName, multipartFile.getInputStream(), multipartFile.getContentType()).getMediaLink();
         Bucket bucket = StorageClient.getInstance().bucket();
         Storage storage = bucket.getStorage();
         BlobId blobId = BlobId.of(bucket.getName(), fileName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
         URL url = storage.signUrl(blobInfo,7, TimeUnit.DAYS, Storage.SignUrlOption.withV4Signature());
         String fileUrl = url.toString();
+        return fileUrl;
+
+    }
+    public String urlFirebase(MultipartFile multipartFile) throws Exception {
+        String fileName = multipartFile.getOriginalFilename();
+        StorageClient storageClient = StorageClient.getInstance();
+        String fileUrl = storageClient.bucket().create(fileName, multipartFile.getInputStream(), multipartFile.getContentType()).getMediaLink();
         return fileUrl;
 
     }
